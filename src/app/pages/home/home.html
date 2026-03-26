@@ -56,24 +56,94 @@
       </div>
     </div>
 
-    <div *ngIf="selectedView === 'list'" class="bg-gray-900 border-round shadow-4 overflow-hidden">
-      <p-table [value]="filteredTickets" styleClass="p-datatable-sm" [rows]="10" [paginator]="true">
+    <div *ngIf="selectedView === 'list'" class="bg-gray-900 border-round shadow-4 overflow-hidden border-1 border-gray-800">
+      <p-table
+        #dt
+        [value]="filteredTickets"
+        [rows]="10"
+        [paginator]="true"
+        [globalFilterFields]="['title', 'assignedTo', 'status', 'priority']"
+        styleClass="p-datatable-sm p-datatable-gridlines"
+        [tableStyle]="{'min-width': '50rem'}">
+
         <ng-template pTemplate="header">
           <tr>
-            <th>Título</th>
-            <th>Estado</th>
-            <th>Prioridad</th>
-            <th>Encargado</th>
-            <th>Límite</th>
+            <th pSortableColumn="title">
+              <div class="flex align-items-center">
+                Título <p-sortIcon field="title"></p-sortIcon>
+                <p-columnFilter type="text" field="title" display="menu" class="ml-auto"></p-columnFilter>
+              </div>
+            </th>
+
+            <th pSortableColumn="status">
+              <div class="flex align-items-center">
+                Estado <p-sortIcon field="status"></p-sortIcon>
+                <p-columnFilter field="status" matchMode="equals" display="menu" class="ml-auto">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select [ngModel]="value" [options]="statusOptions" (onChange)="filter($event.value)" placeholder="Elegir" optionLabel="label" optionValue="value">
+                      <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.value" severity="secondary"></p-tag>
+                      </ng-template>
+                    </p-select>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+
+            <th pSortableColumn="priority">
+              <div class="flex align-items-center">
+                Prioridad <p-sortIcon field="priority"></p-sortIcon>
+                <p-columnFilter field="priority" matchMode="equals" display="menu" class="ml-auto">
+                  <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select [ngModel]="value" [options]="priorityOptions" (onChange)="filter($event.value)" placeholder="Elegir" optionLabel="label" optionValue="value">
+                      <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.value" [severity]="getPrioritySeverity(option.value)"></p-tag>
+                      </ng-template>
+                    </p-select>
+                  </ng-template>
+                </p-columnFilter>
+              </div>
+            </th>
+
+            <th pSortableColumn="assignedTo">
+              <div class="flex align-items-center">
+                Encargado <p-sortIcon field="assignedTo"></p-sortIcon>
+                <p-columnFilter type="text" field="assignedTo" display="menu" class="ml-auto" placeholder="Nombre..."></p-columnFilter>
+              </div>
+            </th>
+
+            <th pSortableColumn="limitDate">
+              <div class="flex align-items-center">
+                Límite <p-sortIcon field="limitDate"></p-sortIcon>
+              </div>
+            </th>
           </tr>
         </ng-template>
+
         <ng-template pTemplate="body" let-t>
           <tr (click)="openEditModal(t)" class="cursor-pointer hover:bg-gray-800 transition-colors">
-            <td>{{t.title}}</td>
-            <td><p-tag [value]="t.status" severity="secondary"></p-tag></td>
-            <td><p-tag [value]="t.priority" [severity]="getPrioritySeverity(t.priority)"></p-tag></td>
-            <td>{{t.assignedTo || 'Nadie'}}</td>
-            <td [ngClass]="{'text-red-500 font-bold': isOverdue(t.limitDate)}">{{t.limitDate | date:'dd/MM/yy'}}</td>
+            <td class="font-bold text-blue-400">{{t.title}}</td>
+            <td>
+              <p-tag [value]="t.status" severity="secondary"></p-tag>
+            </td>
+            <td>
+              <p-tag [value]="t.priority" [severity]="getPrioritySeverity(t.priority)"></p-tag>
+            </td>
+            <td>
+              <span *ngIf="t.assignedTo"><i class="pi pi-user text-xs mr-1"></i>{{t.assignedTo}}</span>
+              <span *ngIf="!t.assignedTo" class="text-gray-600">Sin asignar</span>
+            </td>
+            <td [ngClass]="{'text-red-500 font-bold': isOverdue(t.limitDate)}">
+              {{t.limitDate | date:'dd/MM/yy'}}
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center p-4 text-gray-500 italic">
+              No se encontraron tickets con esos criterios de búsqueda.
+            </td>
           </tr>
         </ng-template>
       </p-table>
